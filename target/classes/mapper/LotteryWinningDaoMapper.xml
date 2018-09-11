@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hhly.lottomsg.mapper.LotteryWinningDaoMapper">
+   
+	<!-- sql语句块：查询 -->
+	<sql id="sql_statement_winning">
+	  	select id, 
+	  		   `code`, 
+	  		   `name`, 
+	  		   lottery_code lotteryCode, 
+	  		   money, 
+	  		   order_id orderId
+  			from LOTTERY_WINNING lw
+	</sql>
+	<!-- sql条件：查询 -->
+  	<sql id="sql_condition_winning">
+  		where 1 = 1
+  		<if test="id != null">
+  			and id = #{id,jdbcType=INTEGER}
+  		</if>
+  		<if test="lotteryCode != null">
+  			and lottery_code = #{lotteryCode,jdbcType=INTEGER}
+  		</if>
+  	</sql>
+  	<!-- 查询单条 -->
+  	<select id="findSingle" parameterType="com.hhly.lottomsg.vo.LotteryWinningVO" resultType="com.hhly.lottomsg.bo.LotteryWinningBO">
+		<include refid="sql_statement_winning" />
+		<include refid="sql_condition_winning" />
+		LIMIT 1
+  	</select>
+  	<!-- 查询多条 -->
+  	<select id="findMultiple" parameterType="com.hhly.lottomsg.vo.LotteryWinningVO" resultType="com.hhly.lottomsg.bo.LotteryWinningBO">
+  		<include refid="sql_statement_winning" />
+  		<include refid="sql_condition_winning" />
+  		order by `code`, order_id
+  	</select>
+</mapper>

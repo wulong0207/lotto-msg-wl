@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.hhly.lottomsg.mapper.CouponDaoMapper">
+
+	<sql id="Column_List">
+		ID,
+		RED_CODE REDCODE,
+		RED_CATEGORY REDCATEGORY,
+		RED_TYPE REDTYPE,
+		RED_NAME REDNAME,
+		RED_VALUE REDVALUE,
+		RED_STATUS REDSTATUS,
+		USE_TIME USETIME,
+		ACTIVE_END_TIME ACTIVEENDTIME,
+		RED_OVERDUE_TIME REDOVERDUETIME,
+		OBTAIN_TIME OBTAINTIME,
+		RED_REMARK REDREMARK,
+		UPDATE_TIME UPDATETIME,
+		CREATE_TIME CREATETIME,
+		RED_SOURCE REDSOURCE,
+		LIMIT_LOTTERY_CHILD LIMITLOTTERYCHILD,
+		LIMIT_LOTTERY_CHILD_TYPE LIMITLOTTERYCHILDTYPE,
+		RANDOM_RED_TYPE RANDOMREDTYPE,
+		NOTICE_STATUS NOTICESTATUS,
+		USER_ID USERID
+	</sql>
+	
+	<select id="findList"
+		resultType="com.hhly.lottomsg.bo.OperateCouponBO">
+		select
+		<include refid="Column_List" />
+		from OPERATE_COUPON 
+			where date_sub(red_overdue_time,interval 3 day) <![CDATA[<]]> NOW() 
+				 	and red_status = 3 
+				<if test="noticeStatus != null">
+					and NOTICE_STATUS = #{noticeStatus,jdbcType=INTEGER} 
+				</if>
+		order by red_overdue_time
+	</select>
+	
+	<update id="updCouponStatus">
+	 update OPERATE_COUPON
+	     set
+	       NOTICE_STATUS = #{noticeStatus,jdbcType=INTEGER}
+	     where  ID in (
+	      <foreach collection="ids" item="item" separator=",">  
+	      		#{item.id,jdbcType=INTEGER}
+	      </foreach>
+	      )
+	</update>
+
+</mapper>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.hhly.lottomsg.mapper.SingleUploadLogDaoMapper">
+    <!--  -->
+    
+    <sql id="Base_Column_List" >
+	    ID, USERID, LOTTERY_CODE, ORDER_CODE, 
+	    FILE_URL, UPLOAD_RESULT, SESSION_TYPE, 
+	    OPERATION_TYPE, SHIFT_TYPE, SHIFT,
+	    FILE_FORMAT, REMARK, CREATE_TIME
+    </sql>
+    
+    <resultMap id="BaseResultMap" type="com.hhly.lottomsg.bo.SingleUploadLogBO">
+	    <id column="ID" jdbcType="INTEGER" property="id" />
+	    <result column="USERID" jdbcType="INTEGER" property="userId"/>
+	    <result column="LOTTERY_CODE" jdbcType="INTEGER" property="lotteryCode" />
+	    <result column="FILE_URL" jdbcType="VARCHAR" property="fileUrl" />
+	    <result column="UPLOAD_RESULT" jdbcType="INTEGER" property="uploadResult" />
+	    <result column="SESSION_TYPE" jdbcType="INTEGER" property="sessionType" />
+	    <result column="OPERATION_TYPE" jdbcType="INTEGER" property="operationType" />
+	    <result column="SHIFT_TYPE" jdbcType="INTEGER" property="shiftType" />
+	    <result column="SHIFT" jdbcType="VARCHAR" property="shift" />
+	    <result column="FILE_FORMAT" jdbcType="INTEGER" property="fileFormat" />
+	    <result column="REMARK" jdbcType="VARCHAR" property="remark" />
+	    <result column="CREATE_TIME" jdbcType="TIMESTAMP" property="createTime" />
+	</resultMap> 
+	    
+    <select id="findSingleUploadLogInfo" parameterType="com.hhly.lottomsg.po.SingleUploadLogPO" resultMap="BaseResultMap">
+		select
+	    <include refid="Base_Column_List"/> 
+		from SINGLE_UPLOAD_LOG
+		where LOTTERY_CODE = #{lotteryCode}
+		and  USERID = #{userId}
+	    <if test="orderCode != null" >
+	        and ORDER_CODE = #{orderCode,jdbcType=VARCHAR}
+	    </if>
+		<if test="sessionType != null" >
+			and SESSION_TYPE = #{sessionType,jdbcType=DECIMAL}
+		</if> 
+		<if test="operationType != null" >
+	        and OPERATION_TYPE = #{operationType,jdbcType=DECIMAL}
+	    </if>
+		order by CREATE_TIME asc
+	</select>
+     
+    <insert id="insertSingleUploadLog" parameterType="com.hhly.lottomsg.po.SingleUploadLogPO">
+        insert into SINGLE_UPLOAD_LOG(
+	            USERID,
+	            LOTTERY_CODE,
+	            ORDER_CODE,
+	            FILE_URL,
+	            UPLOAD_RESULT,
+	            SESSION_TYPE,
+	            OPERATION_TYPE,
+	            SHIFT_TYPE,
+	            SHIFT,   
+	            FILE_FORMAT,
+	            REMARK,
+	            CREATE_TIME)
+            values (
+	            #{userId,jdbcType=INTEGER},
+	            #{lotteryCode,jdbcType=INTEGER},
+	            #{orderCode,jdbcType=VARCHAR},
+	            #{fileUrl,jdbcType=VARCHAR},
+	            #{uploadResult,jdbcType=INTEGER},
+	            #{sessionType,jdbcType=INTEGER},
+	            #{operationType,jdbcType=INTEGER},
+	            #{shiftType,jdbcType=INTEGER},
+	            #{shift,jdbcType=VARCHAR},
+	            #{fileFormat,jdbcType=INTEGER},
+	            #{remark,jdbcType=VARCHAR},
+	            now())
+    </insert>
+</mapper>

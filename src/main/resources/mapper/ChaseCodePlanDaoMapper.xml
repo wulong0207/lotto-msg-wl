@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.hhly.lottomsg.mapper.ChaseCodePlanDaoMapper">
+	
+	<select id="selectChaseCodeByOrder" resultType="com.hhly.lottomsg.bo.ChaseCodePlanBO">
+		SELECT
+			oa.issue_amount chaseIssueNum,
+			oa.had_issue chasedIssueNum,
+		  oa.pre_bonus prizeMoney,
+		  oa.order_add_code orderAddCode,
+		  oa.lottery_code lotCode,
+			CASE oa.add_status
+				WHEN 1 THEN
+					'追号中'
+				WHEN 2 THEN
+					'中奖停追'
+				WHEN 3 THEN
+					'追号结束'
+				WHEN 4 THEN
+					'用户撤单'
+				WHEN 5 THEN
+					'系统撤单' END AS statusName
+				FROM
+					(
+						SELECT
+							*
+						FROM
+							order_added_issue
+						WHERE
+							order_code =#{orderCode}
+					) oai
+				LEFT JOIN order_added oa ON oai.order_add_code = oa.order_add_code
+	</select>
+	
+	<select id="selectChaseCodeByOrderAddCode" resultType="com.hhly.lottomsg.bo.ChaseCodePlanBO">
+				SELECT
+					oa.issue_amount chaseIssueNum,
+					oa.had_issue chasedIssueNum,
+					oa.pre_bonus prizeMoney,
+					oa.user_id userId,
+					oa.buy_time buyTime,
+					oa.order_add_code orderAddCode,
+					oa.lottery_code lotCode,
+					CASE oa.add_status
+						WHEN 1 THEN
+							'追号中'
+						WHEN 2 THEN
+							'中奖停追'
+						WHEN 3 THEN
+							'追号结束'
+						WHEN 4 THEN
+							'用户撤单'
+						WHEN 5 THEN
+							'系统撤单'
+						END AS statusName
+				FROM
+					order_added oa
+				WHERE
+					order_add_code = #{orderAddCode}
+	</select>
+</mapper>

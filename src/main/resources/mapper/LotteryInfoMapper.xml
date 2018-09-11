@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hhly.lottomsg.mapper.LotteryInfoMapper">
+
+
+    <!-- 前端接口：用户中心-查询低频彩等待出票的官方出票时间段-->
+    <select id="findNumOfficialTime" parameterType="com.hhly.lottomsg.vo.LotteryVO" resultType="com.hhly.lottomsg.bo.IssueOfficialTimeBO">
+        select date_format(li.official_start_time, '%H:%i') officialStartTimeStr,
+		       date_format(li.official_end_time, '%H:%i') officialEndTimeStr
+		  from LOTTERY_ISSUE li
+		 where lottery_code = #{lotteryCode,jdbcType=INTEGER}
+		   and current_issue = 1
+		   limit 1
+    </select>
+    <!-- 前端接口：用户中心-查询高频彩等待出票的官方出票时间段-->
+    <select id="findHighOfficialTime" parameterType="com.hhly.lottomsg.vo.LotteryVO" resultType="com.hhly.lottomsg.bo.IssueOfficialTimeBO">
+        select date_format(min(li.official_start_time), '%H:%i') officialStartTimeStr,
+		       date_format(max(li.official_end_time), '%H:%i') officialEndTimeStr
+		  from LOTTERY_ISSUE li
+		 where lottery_code = #{lotteryCode,jdbcType=INTEGER}
+		   and DATE_FORMAT(li.official_start_time, '%Y-%m-%d 00:00:00') = DATE_FORMAT(date_sub(now(), interval 1 day), '%Y-%m-%d 00:00:00')
+    </select>
+    <!-- 前端接口：用户中心-查询竞技彩等待出票的官方出票时间段-->
+    <select id="findSportOfficialTime" parameterType="com.hhly.lottomsg.vo.LotteryVO" resultType="com.hhly.lottomsg.bo.IssueOfficialTimeBO">
+        select officialStartTime, officialEndTime
+		  from (select li.official_start_time officialStartTime,
+		               li.official_end_time officialEndTime
+		          from LOTTERY_ISSUE li
+		         where li.lottery_code = #{lotteryCode,jdbcType=INTEGER}
+		           and li.issue_code <![CDATA[ < ]]> (select li.issue_code
+		                                  from LOTTERY_ISSUE li
+		                                 where lottery_code = #{lotteryCode,jdbcType=INTEGER}
+		                                   and current_issue = 1 limit 1)
+		                                   order by li.issue_code desc limit 1) t
+		union all
+
+		select officialStartTime, officialEndTime
+	      from (select li.official_start_time officialStartTime,
+				       li.official_end_time   officialEndTime
+				  from LOTTERY_ISSUE li
+				 where lottery_code = #{lotteryCode,jdbcType=INTEGER}
+				   and current_issue = 1
+				  	limit 1) t1
+    </select>
+
+    <select id="findLotteryIssue" resultType="com.hhly.lottomsg.bo.NewIssueBO">
+        select
+        issue_code issuecode,
+        OFFICIAL_END_TIME OFFICIALENDTIME,
+        SALE_END_TIME SALEENDTIME,
+        LOTTERY_TIME LOTTERYTIME,
+        SALE_TIME SALETIME
+        from LOTTERY_ISSUE
+        where lottery_code = #{lotteryCode}
+        and issue_code = #{issueCode}
+    </select>
+
+    <!--获取比赛时间-->
+    <select id="querySportMatchInfo" resultType="com.hhly.lottomsg.bo.SportAgainstInfoBO">
+        select
+         t.START_TIME startTime
+        from SPORT_AGAINST_INFO t
+        where t.lottery_code=#{lotteryCode}
+        and t.SYSTEM_CODE = #{systemCode}
+    </select>
+
+
+
+</mapper>

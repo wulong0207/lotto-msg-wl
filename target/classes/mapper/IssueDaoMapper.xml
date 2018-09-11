@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.hhly.lottomsg.mapper.IssueDaoMapper">
+	
+		<resultMap id="LotteryResultMap" type="com.hhly.lottomsg.bo.LotteryBO">
+		<result property="lotteryCode" column="lottery_code" jdbcType="INTEGER"/>
+  	  	<result property="lotteryName" column="lottery_name" jdbcType="VARCHAR"/>
+  	  	<result property="lotteryLogoUrl" column="lottery_logo_url" jdbcType="VARCHAR"/>
+  	  	<result property="saleStatus" column="sale_status" jdbcType="SMALLINT"/>
+  	  	<result property="drawTime" column="draw_time" jdbcType="VARCHAR"/>
+  	  	<result property="vacations" column="vacations" jdbcType="VARCHAR"/>
+  	  	<result property="startSailTime" column="start_sail_time" jdbcType="VARCHAR"/>
+  	  	<result property="endSaleTime" column="end_sail_time" jdbcType="VARCHAR"/>
+  	  	<result property="endCheckTime" column="end_check_time" jdbcType="VARCHAR"/>
+  	  	<result property="sailDayCycle" column="sail_day_cycle" jdbcType="VARCHAR"/>
+        <result property="buyEndTime" column="buy_end_time" jdbcType="DECIMAL"/>
+        <result property="platform" column="platform" jdbcType="VARCHAR"/>
+	</resultMap>
+	
+	<sql id="issueBOColumns">
+			lottery_code lotCode,
+		  	lottery_name lotName,
+		 	issue_code issueCode,
+		  	sale_status statusId,
+		  	sale_end_time saleEndTime,
+		  	draw_code drawCode,
+		  	jackpot_amount jackpotAmount
+	</sql>
+	
+	<sql id="selectIssueWhere">
+		<where>
+			<if test="lotCode != null">
+				and lottery_code = #{lotCode}
+			</if>
+			<if test="issueCode != null">
+				and issue_code = #{issueCode}
+			</if>
+			<if test="saleStatus != null">
+				and sale_status = #{saleStatus}
+			</if>
+			
+		</where>
+	</sql>
+	
+	<select id="selectIssue" parameterType="com.hhly.lottomsg.vo.IssueVO" resultType="com.hhly.lottomsg.bo.IssueBO">
+		SELECT
+		  <include refid="issueBOColumns"/>
+		FROM
+			lottery_issue
+		<include refid="selectIssueWhere"/>
+	</select>
+	
+	<select id="selectTodaySaleEndIssues" resultType="com.hhly.lottomsg.bo.IssueBO">
+		SELECT
+		  <include refid="issueBOColumns"/>
+		FROM
+			lottery_issue where 
+								lottery_code >= 100
+									AND lottery_code <![CDATA[<]]> 200 
+									AND DATE_FORMAT(sale_end_time, '%Y-%m-%d') = DATE_FORMAT(NOW(), '%Y-%m-%d')
+									AND DATE_ADD(sale_end_time,INTERVAL -1 HOUR) > NOW()
+	</select>
+	
+	<!-- SP值实时推送测试代码
+	<select id="findSalingMatchs" resultType="java.lang.Integer">
+		select id from sport_against_info where lottery_code=300 and match_status=9 and sale_end_time>now() 
+	</select> -->
+	
+	<select id="selectLotCurIssue" resultType="com.hhly.lottomsg.bo.IssueBO">
+		SELECT
+		  <include refid="issueBOColumns"/>
+		FROM
+			lottery_issue
+		 where lottery_code=#{lotteryCode} and current_issue=1
+	</select>
+	
+	<select id="findLotteryInfo" resultMap="LotteryResultMap">
+		select lottery_code,
+		       lottery_name,
+		       lottery_logo_url,
+		       sale_status,
+		       draw_time,
+		       vacations,
+		       start_sail_time,
+		       end_sail_time,
+		       end_check_time,
+        	   sail_day_cycle,
+        	   buy_end_time,
+       		   platform
+		  from LOTTERY_TYPE
+		 where lottery_code = #{lotteryCode}
+	</select>
+	
+</mapper>

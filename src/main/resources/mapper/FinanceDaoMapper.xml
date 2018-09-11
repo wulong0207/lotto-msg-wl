@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.hhly.lottomsg.mapper.FinanceDaoMapper">
+	
+	<select id="selectRechargeLog" resultType="com.hhly.lottomsg.bo.FinanceBO">
+		SELECT
+			recharge_amount rechargeAmount,
+			bank_card_num bankCardCode,
+			(
+				SELECT
+					total_cash_balance + eff_red_balance
+				FROM
+					m_user_wallet
+				WHERE
+					user_id=#{userId}
+			) as accountBalance
+				FROM
+					trans_recharge
+				WHERE
+					user_id = #{userId}
+				AND trans_recharge_code = #{rechargeCode}
+	</select>
+	
+	<select id="selectTakenLog" resultType="com.hhly.lottomsg.bo.FinanceBO">
+		SELECT
+			extract_amount extractAmount,
+			bank_card_num bankCardCode,
+			trans_fail_info failInfo
+		FROM
+			trans_taken
+		WHERE
+			user_id=#{userId}
+		AND trans_taken_code=#{takenCode}
+		
+	</select>
+	
+</mapper>

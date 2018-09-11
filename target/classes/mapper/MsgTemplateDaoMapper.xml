@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hhly.lottomsg.mapper.MsgTemplateDaoMapper">
+	
+	<sql id="Msg_Template_Columns">
+		ID,
+		TYPE_ID TYPEID,
+		MSG_TYPE MSGTYPE,
+		TYPE_NAME TYPENAME,
+		TYPE_NODE TYPENODE,
+		STATUS STATUS,
+		MOB_STATUS MOBSTATUS, 
+		SITE_STATUS SITESTATUS,
+		APP_STATUS APPSTATUS,
+		WECHAT_STATUS WECHATSTATUS,
+		MOB_TITLE MOBTITLE,
+		MOB_CONTENT MOBCONTENT,
+		SITE_TITLE SITETITLE,
+		SITE_CONTENT SITECONTENT,
+		APP_TITLE APPTITLE,
+		APP_CONTENT APPCONTENT,
+		TYPE_DESC TYPEDESC,
+		CREATE_BY CREATEBY,
+		MODIFY_BY MODIFYBY,
+		UPDATE_TIME UPDATETIME,
+		CREATE_TIME CREATETIME,
+		WECHAT_ID WECHATID,
+		WECHAT_TITLE WECHATTITLE,
+		HEADER_CON HEADERCON,
+		FOOTER_CON FOOTERCON,
+		APP_ADD_FIELDS APPADDFIELDS,
+		to_lottery_code toLotteryCode,
+		activity_url activityUrl,
+		condition_key conditionKey,
+		start_days startDays,
+		end_days endDays,
+		lottery_code_limit lotteryCodeLimit,
+		money setMoney,
+		balance setBalance,
+		sms_send_channel smsSendChannel,
+		no_send_channel noSendChannel,
+		send_lottery_code sendLotteryCode
+	</sql>
+	
+	<sql id="Wechat_Template_Columns">
+		ID,
+		TYPE_NAME TYPENAME,
+		HEADER_COLOR HEADERCOLOR,
+		STATUS STATUS,
+		FOOTER_COLOR FOOTERCOLOR, 
+		TITLE TITLE,
+		COLOR COLOR
+	</sql>
+	
+		
+	<select id="findMsgTemplateById" resultType="com.hhly.lottomsg.bo.OperateMsgTemplateBO">
+	    select <include refid="Msg_Template_Columns"/>,TITLE wechatAddFields from (
+	    	select t1.*,t2.title as title from (
+	    	select * from OPERATE_MSG_TEMPLATE where ID=#{id}) t1 left join OPERATE_WECHAT_TEMPLATE t2 on t1.WECHAT_ID=t2.ID) t
+	</select>
+	
+	<select id="findMsgTemplateByTypeId" resultType="com.hhly.lottomsg.bo.OperateMsgTemplateBO">
+	    select <include refid="Msg_Template_Columns"/>,TITLE wechatAddFields from (
+	    select t1.*,t2.title as title from (
+	    select * from OPERATE_MSG_TEMPLATE where TYPE_ID=#{typeId}) t1 left join OPERATE_WECHAT_TEMPLATE t2 on t1.WECHAT_ID=t2.ID) t
+	</select>
+	
+	<select id="findMsgTemplateListByTypeIds" resultType="com.hhly.lottomsg.bo.OperateMsgTemplateBO">
+	    select <include refid="Msg_Template_Columns"/>,TITLE wechatAddFields from (
+	    select t1.*,t2.title as title from (
+	    select * from OPERATE_MSG_TEMPLATE where TYPE_ID in (
+			    <foreach collection="list" item="typeId" separator=",">
+			    	#{typeId}
+			    </foreach>
+	    	)
+	    ) t1 left join OPERATE_WECHAT_TEMPLATE t2 on t1.WECHAT_ID=t2.ID) t
+	</select>
+	
+	<select id="findWechatTemplateById" resultType="com.hhly.lottomsg.bo.OperateWechatTemplateBO">
+	    select <include refid="Wechat_Template_Columns"/> from OPERATE_WECHAT_TEMPLATE where ID=#{id}
+	</select>
+	
+	<sql id="sql_condition_OperateMsgTemplateVO">
+		<where>
+			<if test="id!=null and id!=''">
+				and ID = #{id}
+			</if>
+			<if test="status!=null">
+				and STATUS = #{status}
+			</if>
+			<if test="msgType!=null and msgType!=''">
+				and MSG_TYPE = #{msgType}
+			</if>
+			<if test="typeNode!=null">
+				and TYPE_NODE = #{typeNode}
+			</if>
+			<if test="typeId!=null">
+				and TYPE_ID = #{typeId}
+			</if>
+			
+		</where>
+	</sql>
+	
+	<select id="findMsgTemplate" parameterType="com.hhly.lottomsg.vo.OperateMsgTemplateVO" 
+		resultType="com.hhly.lottomsg.bo.OperateMsgTemplateBO">
+	    select <include refid="Msg_Template_Columns"/> 
+	    		from OPERATE_MSG_TEMPLATE 
+	    			<include refid="sql_condition_OperateMsgTemplateVO"/>
+	</select>
+</mapper>

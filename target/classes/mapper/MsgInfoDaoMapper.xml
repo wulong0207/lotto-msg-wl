@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hhly.lottomsg.mapper.MsgInfoDaoMapper">
+	
+	<sql id="Msg_Info_Columns">
+		ID,
+		MSG_TYPE MSGTYPE,
+		USER_ID USERID,
+		NICK_NAME NICKNAME,
+		ACCOUNT_NAME ACCOUNTNAME,
+		CUS_MOBILE CUSMOBILE,
+		TEMPLATE_ID TEMPLATEID, 
+		TEMPLATE_NAME TEMPLATENAME,
+		SEND_TYPE SENDTYPE,
+		STATUS STATUS,
+		SEND_ERROR SEND_ERROR,
+		MSG_TITLE MSGTITLE,
+		MSG_CONTENT MSGCONTENT,
+		MSG_BATCH MSGBATCH,
+		SEND_TIME SENDTIME,
+		READ_TIME READTIME,
+		MSG_DESC MSGDESC,
+		CREATE_TIME CREATETIME
+	</sql>
+
+	
+	<update id="updateMsgSendStatus" >
+		update OPERATE_MSG_INFO set STATUS=#{status},send_error=#{sendError},send_time=NOW() where USER_ID=#{userId} and MSG_BATCH=#{msgBatch} and SEND_TYPE=#{sendType} 
+	</update>
+	
+	
+		<!-- 新增 -->
+	<insert id="addMsgInfo" parameterType="java.util.List">
+			insert into OPERATE_MSG_INFO(
+					NICK_NAME,ACCOUNT_NAME,CUS_MOBILE,TEMPLATE_ID,MSG_TYPE,
+					SEND_TYPE,STATUS,MSG_TITLE,MSG_CONTENT,MSG_BATCH,SEND_TIME,MSG_DESC,CREATE_TIME,CREATE_BY,PRE_SEND_TIME,USER_ID,SEND_ERROR) 
+			values
+			<foreach collection="list" item="item" index="index" separator=",">
+				(#{item.nickName,jdbcType=VARCHAR},#{item.accountName,jdbcType=VARCHAR},#{item.cusMobile,jdbcType=NUMERIC},
+				 #{item.templateId,jdbcType=NUMERIC}, #{item.msgType,jdbcType=NUMERIC},
+							#{item.sendType,jdbcType=NUMERIC},#{item.status,jdbcType=NUMERIC},#{item.msgTitle,jdbcType=VARCHAR},
+							#{item.msgContent,jdbcType=VARCHAR},#{item.msgBatch,jdbcType=VARCHAR},#{item.sendTime,jdbcType=TIMESTAMP},
+							#{item.msgDesc,jdbcType=VARCHAR},NOW(),#{item.createBy,jdbcType=VARCHAR},#{item.preSendTime,jdbcType=TIMESTAMP},
+							#{item.userId,jdbcType=NUMERIC},#{item.sendError,jdbcType=VARCHAR})
+		</foreach>
+	</insert>
+	
+	<!-- 查询详情 -->
+	<select id="findMsgInfoById" resultType="com.hhly.lottomsg.bo.OperateMsgInfoBO">
+	    select <include refid="Msg_Info_Columns"/> from OPERATE_MSG_INFO where ID=#{id}
+	</select>
+	
+	<!-- 根据批次号查询 -->
+	<select id="findMsgsByBatch" resultType="com.hhly.lottomsg.bo.OperateMsgInfoBO">
+	    select <include refid="Msg_Info_Columns"/> from OPERATE_MSG_INFO where MSG_BATCH=#{batchCode} and STATUS=0
+	</select>
+	
+		<!-- 根据模板编号查询(除站内信外)-->
+	<select id="findMsgsByTemplateCode" resultType="com.hhly.lottomsg.bo.OperateMsgInfoBO">
+	    select <include refid="Msg_Info_Columns"/> from OPERATE_MSG_INFO where STATUS=0 and send_type > 1 and template_id = (select id FROM operate_msg_template where type_id=#{templateCode})
+	</select>
+	
+	<!-- 根据模板id查询近2天待发送消息(只查询手机短信和APP通知消息) -->
+	<select id="findMsgsByTemplate" resultType="com.hhly.lottomsg.bo.OperateMsgInfoBO">
+	    select <include refid="Msg_Info_Columns"/> from OPERATE_MSG_INFO where TEMPLATE_ID=#{templateId} 
+	    		and STATUS=0 and create_time > DATE_ADD(NOW(),INTERVAL -1 DAY) and send_type in(2,3)
+	</select>
+	
+</mapper>

@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hhly.lottomsg.mapper.UserInfoDaoMapper">
+
+	<resultMap type="com.hhly.lottomsg.bo.UserInfoBO" id="BaseResultMap">
+	  	<id column="ID" property="id" jdbcType="INTEGER"/>
+	  	<result column="ACCOUNT_ID" property="accountId" jdbcType="VARCHAR"/>
+	  	<result column="ACCOUNT_NAME" property="account" jdbcType="VARCHAR"/>
+	  	<result column="ACCOUNT_PASSWORD" property="password" jdbcType="VARCHAR"/>
+	  	<result column="NICK_NAME" property="nickname" jdbcType="VARCHAR"/>
+	  	<result column="RCODE" property="rCode" jdbcType="VARCHAR"/>
+	  	<result column="ACCOUNT_STATUS" property="accountStatus" jdbcType="INTEGER"/>
+	  	<result column="HEAD_URL" property="headUrl" jdbcType="VARCHAR"/> 
+	  	<result column="HEAD_STATUS" property="headStatus" jdbcType="INTEGER"/>
+	  	<result column="CUS_MOBILE" property="mobile" jdbcType="INTEGER"/>
+	  	<result column="MOBILE_CHECK" property="mobileStatus" jdbcType="INTEGER"/>
+	  	<result column="MOBILE_LOGIN" property="isMobileLogin" jdbcType="INTEGER"/>
+	  	<result column="CUS_MAIL" property="email" jdbcType="VARCHAR"/>
+	  	<result column="EMAIL_CHECK" property="emailStatus" jdbcType="INTEGER"/>
+	  	<result column="EMAIL_LOGIN" property="isEmailLogin" jdbcType="INTEGER"/>
+	  	<result column="ACTUAL_NAME" property="realName" jdbcType="VARCHAR"/>
+	  	<result column="SEX" property="sex" jdbcType="INTEGER"/>
+	  	<result column="ADDRESS" property="address" jdbcType="VARCHAR"/>
+	  	<result column="ID_NUM" property="idCard" jdbcType="VARCHAR"/>
+	  	<result column="REGIST_TIME" property="registerTime" jdbcType="TIMESTAMP"/>
+	  	<result column="LAST_LOGIN_TIME" property="lastLoginTime" jdbcType="TIMESTAMP"/>
+	  	<result column="CHANNEL_ID" property="channelId" jdbcType="VARCHAR"/>
+	  	<result column="MSG_MOB" property="msgMob" jdbcType="INTEGER"/>
+	  	<result column="MSG_SITE" property="msgSite" jdbcType="INTEGER"/>
+	  	<result column="MSG_APP" property="msgApp" jdbcType="INTEGER"/>
+	  	<result column="MSG_WECHAT" property="msgWechat" jdbcType="INTEGER"/>
+	    <result column="MOB_NOT_DISTURB" property="mobNotDisturb" jdbcType="VARCHAR"/>
+	  	<result column="APP_NOT_DISTURB" property="appNotDisturb" jdbcType="VARCHAR"/>
+	  	<result column="FORBIT_END_TIME" property="forbitEndTime" jdbcType="TIMESTAMP"/>
+				  	
+	</resultMap>
+	
+	<resultMap type="com.hhly.lottomsg.bo.GuessUserInfoBO" id="GuessUserMap" extends="BaseResultMap">
+		<result column="guess_time" property="guessTime" jdbcType="TIMESTAMP"/>
+		<result column="rebate_money" property="bonus" jdbcType="DECIMAL"/>
+	</resultMap>
+	
+	<select id="findBallGameGuessUsers" resultMap="GuessUserMap">
+		SELECT
+					tu.*,ta.guess_time,ta.rebate_money
+				FROM
+					m_user_info tu
+				RIGHT JOIN (
+					SELECT
+						user_id,
+						rebate_money,
+						create_time as guess_time
+					FROM
+						operate_activity_info
+					WHERE
+						activity_code = #{activityCode}
+					AND activity_rule_id = (
+						SELECT
+							id
+						FROM
+							operate_activity_chp_guess
+						WHERE
+							sport_against_info_id = (
+								SELECT
+									id
+								FROM
+									sport_against_info
+								WHERE
+									lottery_code = #{lotteryCode}
+								AND system_code = #{systemCode}
+							)
+					)
+				) ta ON tu.id = ta.user_id
+	</select>
+
+	<select id="findValidUserInfoCount" resultType="int">
+		SELECT count(*) FROM M_USER_INFO WHERE ACCOUNT_STATUS=1       
+	</select>
+	
+	<select id="findObsoletedUsers" resultMap="BaseResultMap">
+		select mu.* from m_user_info mu RIGHT JOIN (select * from (SELECT
+			oi.user_id
+		FROM
+			(
+				SELECT
+					order_code
+				FROM
+					order_detail
+				WHERE
+					lottery_child_code LIKE #{lotteryCode}
+				AND plan_content LIKE #{systemCodeLike}
+				GROUP BY
+					order_code
+			) od
+		LEFT JOIN order_info oi ON od.order_code = oi.order_code) u GROUP BY user_id) ou on mu.id = ou.user_id
+	</select>
+	
+	<select id="findValidUserInfo" resultMap="BaseResultMap">
+				SELECT * FROM M_USER_INFO 
+					WHERE ACCOUNT_STATUS=1 ORDER BY REGIST_TIME limit #{begin},#{pageSize}
+	</select>
+	
+	<select id="findUserInfoByIds" resultMap="BaseResultMap">
+			SELECT
+				 * FROM M_USER_INFO 
+				WHERE 
+					ID in (
+					<foreach collection="list" item="item"  separator=",">
+						#{item}
+					</foreach>
+					)
+	</select>
+	
+	<select id="findUserFans" resultMap="BaseResultMap">
+		SELECT
+				u2.*
+			FROM
+				(
+					SELECT
+						user_id
+					FROM
+						m_user_issue_link
+					WHERE
+						user_issue_id = #{userIssueId} and data_status=1
+				) u1
+			LEFT JOIN m_user_info u2 ON u1.user_id = u2.id
+	</select>
+	
+	<select id="findBirthdayUser" resultMap="BaseResultMap">
+		select * from m_user_info where SUBSTRING(id_num,11,4) = DATE_FORMAT(NOW(),'%m%d')
+	</select>
+	
+	<select id="findUserInfoById" resultMap="BaseResultMap">
+			SELECT
+				* FROM M_USER_INFO 
+				WHERE 
+					ID = #{id}
+					
+	</select>
+	
+	<!-- 注册第N天未登录：未实名认证用户注册第N天未进行登录 -->
+	<select id="findCon1Users" resultMap="BaseResultMap">
+					SELECT
+						*
+					FROM
+						(
+							SELECT
+								*
+							FROM
+								m_user_info
+							WHERE
+								actual_name IS NULL
+							AND id_num IS NULL
+							AND DATE_FORMAT(regist_time, '%Y%m%d') = DATE_FORMAT(
+								DATE_ADD(NOW(), INTERVAL - #{days} DAY),
+								'%Y%m%d'
+							)
+						) u
+					LEFT JOIN (
+						SELECT
+							user_id
+						FROM
+							m_user_modify_log
+						WHERE
+							user_action = 2
+						GROUP BY
+							user_id HAVING count(*) > 1
+					) ul ON u.id = ul.user_id
+			WHERE
+				ul.user_id IS NULL
+	</select>
+	
+	<!-- 注册第N天未下单：未实名认证用户注册第N天未进行任何订单下单 -->
+	<select id="findCon2Users" resultMap="BaseResultMap">
+					SELECT
+						*
+					FROM
+						(
+							SELECT
+								*
+							FROM
+								m_user_info
+							WHERE
+								actual_name IS NULL
+							AND id_num IS NULL
+							AND DATE_FORMAT(regist_time, '%Y%m%d') = DATE_FORMAT(
+								DATE_ADD(NOW(), INTERVAL - #{days} DAY),
+								'%Y%m%d'
+							)
+						) u
+					LEFT JOIN (
+						SELECT
+							user_id
+						FROM
+							order_info
+						GROUP BY
+							user_id
+					) ul ON u.id = ul.user_id
+				WHERE
+				ul.user_id IS NULL
+	</select>
+	
+	<!-- <3>注册（未实名认证）第N天有下单但未购买：未实名认证用户注册第N天有进行下单，但并未支付购买（查询支付状态包括：等待支付，未支付过期，支付中） -->
+	<select id="findCon3Users" resultMap="BaseResultMap">
+					SELECT
+						*
+					FROM
+						(
+							SELECT
+								*
+							FROM
+								m_user_info
+							WHERE
+								actual_name IS NULL
+							AND id_num IS NULL
+							AND DATE_FORMAT(regist_time, '%Y%m%d') = DATE_FORMAT(
+								DATE_ADD(NOW(), INTERVAL - #{days} DAY),
+								'%Y%m%d'
+							)
+						) u
+					INNER JOIN (
+						SELECT
+							user_id
+						FROM
+							order_info
+						WHERE
+							pay_status in (1,3,7)
+						GROUP BY
+							user_id
+					) ul ON u.id = ul.user_id
+	</select>
+	
+	<!-- <4>注册并实名认证后第N天未购买：已实名认证用户注册第N天有下单，但并未支付购买（查询支付状态包括：等待支付，未支付过期，支付中） -->
+	<select id="findCon4Users" resultMap="BaseResultMap">
+					SELECT
+						*
+					FROM
+						(
+							SELECT
+								*
+							FROM
+								m_user_info
+							WHERE
+								actual_name IS NOT NULL
+							AND id_num IS NOT NULL
+							AND DATE_FORMAT(regist_time, '%Y%m%d') = DATE_FORMAT(
+								DATE_ADD(NOW(), INTERVAL - #{days} DAY),
+								'%Y%m%d'
+							)
+						) u
+					INNER JOIN (
+						SELECT
+							user_id
+						FROM
+							order_info
+						WHERE
+							pay_status in (1,3,7)
+						GROUP BY
+							user_id
+					) ul ON u.id = ul.user_id
+	</select>
+	
+	<!-- <5>注册(不区分实名)第N天未购买：所有注册用户（不区分实名）第N天天有进行下单，但并未支付购买（查询支付状态包括：等待支付，未支付过期，支付中） -->
+	<select id="findCon5Users" resultMap="BaseResultMap">
+					SELECT
+						*
+					FROM
+						(
+							SELECT
+								*
+							FROM
+								m_user_info
+							WHERE
+								DATE_FORMAT(regist_time, '%Y%m%d') = DATE_FORMAT(
+								DATE_ADD(NOW(), INTERVAL - #{days} DAY),
+								'%Y%m%d'
+							)
+						) u
+					INNER JOIN (
+						SELECT
+							user_id
+						FROM
+							order_info
+						WHERE
+							pay_status in (1,3,7)
+						GROUP BY
+							user_id
+					) ul ON u.id = ul.user_id
+	</select>
+	
+	<!-- <6>首单第N天未二单：用户第一个订单成功后第N天未进行下一个成功订单 -->
+	<select id="findCon6Users" resultMap="BaseResultMap">
+					SELECT
+							*
+						FROM
+							(
+								SELECT
+									user_id
+								FROM
+									(
+										SELECT
+											user_id,
+											buy_time
+										FROM
+											order_info
+										WHERE
+											pay_status = 2
+										AND order_status = 6
+										GROUP BY
+											user_id
+										HAVING
+											COUNT(user_id) = 1
+									) o
+								WHERE
+									DATE_FORMAT(o.buy_time, '%Y%m%d') = DATE_FORMAT(
+										DATE_ADD(NOW(), INTERVAL - #{days} DAY),
+										'%Y%m%d'
+									)
+							) ou
+						LEFT JOIN m_user_info u ON ou.user_id = u.id
+	</select>
+	
+	<!-- <7>首单15-30天内无第二单：用户第一个订单成功后第N天~第N天之间未进行下一个成功订单(成功订单：支付成功已出票) -->
+	<select id="findCon7Users" resultMap="BaseResultMap">
+					SELECT
+							*
+						FROM
+							(
+								SELECT
+									user_id
+								FROM
+									(
+										SELECT
+											user_id,
+											buy_time
+										FROM
+											order_info
+										WHERE
+											pay_status = 2
+										AND order_status = 6
+										GROUP BY
+											user_id
+										HAVING
+											COUNT(user_id) = 1
+									) o
+								WHERE
+									DATE_FORMAT(o.buy_time, '%Y%m%d') <![CDATA[<=]]> DATE_FORMAT(
+										DATE_ADD(NOW(), INTERVAL - #{startDays} DAY),
+										'%Y%m%d'
+									) and DATE_FORMAT(o.buy_time, '%Y%m%d') >= DATE_FORMAT(
+										DATE_ADD(NOW(), INTERVAL - #{endDays} DAY),
+										'%Y%m%d'
+									)
+							) ou
+						LEFT JOIN m_user_info u ON ou.user_id = u.id
+	</select>
+	
+	<!-- <8>距上单30到50天未登录：用户距离上一个成功订单第N天~第N天未进行登录  (且距上登录时间第N天~第N天)-->
+	<select id="findCon8Users" resultMap="BaseResultMap">
+					SELECT
+						*
+					FROM
+						(
+							SELECT
+								user_id
+							FROM
+								(
+									SELECT
+										user_id
+											FROM
+												order_info
+											WHERE
+												pay_status = 2
+											AND order_status = 6
+											<if test="lotteryCode!=null">
+												and lottery_code = #{lotteryCode} 
+											</if>
+											GROUP BY
+												user_id 
+											HAVING
+												DATE_FORMAT(max(buy_time), '%Y%m%d') <![CDATA[<=]]> DATE_FORMAT(
+												DATE_ADD(NOW(), INTERVAL - #{startDays} DAY),
+												'%Y%m%d')
+												AND DATE_FORMAT(max(buy_time), '%Y%m%d') >= DATE_FORMAT(
+													DATE_ADD(NOW(), INTERVAL - #{endDays} DAY),
+													'%Y%m%d')
+								) ou
+							LEFT JOIN (
+								SELECT
+									user_id uid,
+									max(create_time) loginTime
+								FROM
+									m_user_modify_log
+								WHERE
+									user_action = 2
+								GROUP BY
+									user_id
+							) um ON ou.user_id = um.uid
+							WHERE
+								DATEDIFF(NOW(), loginTime) >= #{startDays}
+							AND DATEDIFF(NOW(), loginTime) <![CDATA[<=]]> #{endDays}
+						) nlu
+					LEFT JOIN m_user_info u ON nlu.user_id = u.id
+	</select>
+	
+	<!-- <9>距上单30到50天未购买：用户距离上一个成功订单第N天~第N天未进行购买-->
+	<select id="findCon9Users" resultMap="BaseResultMap">
+		SELECT
+			*
+		FROM
+			(
+				SELECT
+					user_id
+				FROM
+					order_info
+				WHERE
+					pay_status = 2
+				AND order_status = 6
+				<if test="lotteryCode!=null">
+					and lottery_code = #{lotteryCode} 
+				</if>
+				GROUP BY
+					user_id
+				HAVING
+					DATE_FORMAT(max(buy_time), '%Y%m%d') <![CDATA[<=]]> DATE_FORMAT(
+						DATE_ADD(NOW(), INTERVAL - #{startDays} DAY),
+						'%Y%m%d'
+					)
+				AND DATE_FORMAT(max(buy_time), '%Y%m%d') >= DATE_FORMAT(
+					DATE_ADD(NOW(), INTERVAL - #{endDays} DAY),
+					'%Y%m%d'
+				)
+			) ou
+		LEFT JOIN m_user_info u ON ou.user_id = u.id
+	</select>
+	
+	<!-- <10>账户余额X元距离上单X天未购买：用户余额N元以上距离上一订单第N天未.进行购买-->
+	<select id="findCon10Users" resultMap="BaseResultMap">
+		SELECT
+				*
+			FROM
+				(
+					SELECT
+						user_id
+					FROM
+						(
+							SELECT
+								user_id
+							FROM
+								order_info
+							WHERE
+								pay_status = 2
+								<if test="lotteryCode!=null">
+									and lottery_code = #{lotteryCode} 
+								</if>
+							GROUP BY
+								user_id
+							HAVING
+								DATE_FORMAT(max(buy_time), '%Y%m%d') = DATE_FORMAT(
+									DATE_ADD(NOW(), INTERVAL - #{startDays} DAY),
+									'%Y%m%d'
+								)
+						) ou
+					INNER JOIN (
+						SELECT
+							user_id uid
+						FROM
+							m_user_wallet
+						WHERE
+							total_cash_balance >= #{userBalance}
+					) bu ON ou.user_id = bu.uid
+				) gu
+			LEFT JOIN m_user_info u ON gu.user_id = u.id
+	</select>
+	
+	<!-- <11>距上单15到30天未购买（低客单）：上单金额N元以下用户，第N天~第N天未购买-->
+	<select id="findCon11Users" resultMap="BaseResultMap">
+		SELECT
+			*
+		FROM
+			(
+				SELECT
+					user_id
+				FROM
+					order_info
+				WHERE
+					pay_status = 2
+				AND order_status = 6
+				AND order_amount <![CDATA[<]]> #{orderMoney} 
+				<if test="lotteryCode!=null">
+					and lottery_code = #{lotteryCode} 
+				</if>
+				GROUP BY
+					user_id
+				HAVING
+					DATE_FORMAT(max(buy_time), '%Y%m%d') <![CDATA[<=]]> DATE_FORMAT(
+						DATE_ADD(NOW(), INTERVAL - #{startDays} DAY),
+						'%Y%m%d'
+					)
+				AND DATE_FORMAT(max(buy_time), '%Y%m%d') >= DATE_FORMAT(
+					DATE_ADD(NOW(), INTERVAL - #{endDays} DAY),
+					'%Y%m%d'
+				)
+			) ou
+		LEFT JOIN m_user_info u ON ou.user_id = u.id
+	</select>
+	
+	<!-- <12>距上单30到50天未购买（高客单）：上单金额N元以上用户，第N天~第N天未购买-->
+	<select id="findCon12Users" resultMap="BaseResultMap">
+		SELECT
+			*
+		FROM
+			(
+				SELECT
+					user_id
+				FROM
+					order_info
+				WHERE
+					pay_status = 2
+				AND order_status = 6
+				AND order_amount > #{orderMoney} 
+				<if test="lotteryCode!=null">
+					and lottery_code = #{lotteryCode} 
+				</if>
+				GROUP BY
+					user_id
+				HAVING
+					DATE_FORMAT(max(buy_time), '%Y%m%d') <![CDATA[<=]]> DATE_FORMAT(
+						DATE_ADD(NOW(), INTERVAL - #{startDays} DAY),
+						'%Y%m%d'
+					)
+				AND DATE_FORMAT(max(buy_time), '%Y%m%d') >= DATE_FORMAT(
+					DATE_ADD(NOW(), INTERVAL - #{endDays} DAY),
+					'%Y%m%d'
+				)
+			) ou
+		LEFT JOIN m_user_info u ON ou.user_id = u.id
+	</select>
+	
+	<!-- <13>购彩平均值X元X天未购买：shang月度购彩金额平率N元以上用户，第N天~第N天未购买-->
+	<select id="findCon13Users" resultMap="BaseResultMap">
+		SELECT
+				*
+			FROM
+				(
+					SELECT
+						user_id
+					FROM
+						(
+							SELECT
+								user_id
+							FROM
+								order_info
+							WHERE
+								pay_status = 2
+							AND order_status = 6
+							GROUP BY
+								user_id
+							HAVING
+								DATE_FORMAT(max(buy_time), '%Y%m%d') <![CDATA[<=]]> DATE_FORMAT(
+									DATE_ADD(NOW(), INTERVAL - #{startDays} DAY),
+									'%Y%m%d'
+								)
+							AND DATE_FORMAT(max(buy_time), '%Y%m%d') >= DATE_FORMAT(
+								DATE_ADD(NOW(), INTERVAL - #{endDays} DAY),
+								'%Y%m%d'
+							)
+						) ou
+					INNER JOIN (
+						SELECT
+							user_id AS uid
+						FROM
+							order_info
+						WHERE
+							pay_status = 2
+						AND order_status = 6
+						AND DATE_FORMAT(buy_time, '%Y%m') = DATE_FORMAT(
+							DATE_ADD(NOW(), INTERVAL - 1 MONTH),
+							'%Y%m'
+						)
+						GROUP BY
+							user_id
+						HAVING
+							sum(order_amount) >= #{orderMoney}
+					) osmu ON ou.user_id = osmu.uid
+				) ous
+			LEFT JOIN m_user_info u ON ous.user_id = u.id
+	</select>
+	
+	<select id="findUserSameMobile" resultType="java.lang.String">
+		SELECT
+				cus_mobile
+			FROM
+				m_user_info
+			WHERE
+				cus_mobile IS NOT NULL
+			GROUP BY
+				cus_mobile
+			HAVING
+				COUNT(id) > 1
+	</select>
+	
+</mapper>

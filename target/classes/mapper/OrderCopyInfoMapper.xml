@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hhly.lottomsg.mapper.OrderCopyInfoMapper">
+
+
+    <select id="queryOrderIssueInfoByOrderCode" parameterType="java.lang.String" resultType="com.hhly.lottomsg.bo.OrderCopyViewBO">
+        select
+         oi.user_issue_id userIssueId,
+         o.user_id userId,
+         oi.id orderIssueId
+        from order_issue_info oi INNER JOIN order_info o on oi.order_code = o.order_code
+        where oi.order_code = #{orderCode}
+    </select>
+
+
+    <select id="queryOrderFollowedInfoByOrderCode" parameterType="java.lang.String" resultType="int">
+        select
+        count(1)
+        from order_followed_info
+        where order_code = #{orderCode}
+    </select>
+
+    <select id="queryOrderInfoStatistics" parameterType="int" resultType="com.hhly.lottomsg.bo.OrderCopyViewBO">
+        select count(1) issueCount,
+        sum(order_amount) issueAmount
+        from order_info
+        where user_id=#{userId}
+         and pay_status=2
+         and order_status=6
+         and order_type=2
+    </select>
+
+    <select id="queryOrderFollowedCount" parameterType="java.lang.String" resultType="com.hhly.lottomsg.bo.OrderCopyViewBO">
+        select count(1) followCount,t1.order_issue_id orderIssueId  from order_followed_info t1 INNER JOIN order_info t2 on t1.order_code = t2.order_code where
+   t2.pay_status=2 and t2.order_status=6 and
+              EXISTS
+              (select t.order_issue_id from order_followed_info t where t.order_code=#{orderCode} and t1.order_issue_id = t.order_issue_id)
+    </select>
+
+    <select id="queryOrderFollowedAmount" parameterType="java.lang.String" resultType="java.lang.Double">
+        select sum(oi.order_amount) from order_info oi where oi.order_code in (select t1.order_code from order_followed_info t1 where
+            EXISTS (select t.order_issue_id from order_followed_info t where t.order_code=#{orderCode} and t1.order_issue_id = t.order_issue_id))
+            and oi.pay_status=2 and oi.order_status=6
+    </select>
+
+    <select id="queryOrderIssueIdByOrderCode" parameterType="java.lang.String" resultType="java.lang.Long">
+        select t1.user_issue_id from order_issue_info t1 where
+               EXISTS(select t.order_issue_id from order_followed_info t where t.order_code=#{orderCode} and t1.id= t.order_issue_id)
+    </select>
+
+    <select id="queryOrderFollowStatis" parameterType="Integer" resultType="com.hhly.lottomsg.bo.OrderCopyViewBO">
+        select sum(t2.follow_num) followCount,sum(t2.follow_amount) followAmount from order_issue_info t2 where t2.user_issue_id= #{muserIssueId}
+    </select>
+
+    <select id="queryOrderIssueRecord" parameterType="Integer" resultType="com.hhly.lottomsg.bo.OrderBaseInfoBO">
+        select  t.order_code     orderCode,
+				t.LOTTERY_CODE   lotteryCode,
+				t.LOTTERY_CHILD_CODE   lotteryChildCode,
+				t.create_time    showDate,
+				t.PRE_BONUS      preBonus,
+				t.LOTTERY_ISSUE  lotteryIssue,
+				t.BUY_TYPE       buyType,
+				t.ORDER_AMOUNT   orderAmount,
+				t.order_status   orderStatus,
+				t.PAY_STATUS     payStatus,
+				t.WINNING_STATUS winningStatus
+        from order_info t INNER JOIN order_issue_info t1 on t.order_code=t1.order_code
+        where t.user_id = #{userId} and t.order_type=2 and t.pay_status=2 and t.order_status=6
+        <if test="type==1">
+            and winning_status!=1 order by t1.create_time desc LIMIT 0,100
+        </if>
+        <if test="type==2">
+            and t.winning_status in (3,4)
+        </if>
+        <if test="type==3">
+            and winning_status!=1
+        </if>
+    </select>
+
+    <select id="queryTotalCommission" parameterType="Integer" resultType="Double">
+         select sum(t.commission_amount) from order_issue_info t where t.user_issue_id = #{userIssueId}
+    </select>
+
+    <update id="updateOrderIssueInfo" parameterType="com.hhly.lottomsg.bo.OrderCopyViewBO">
+        update order_issue_info
+        <set>
+            <if test="followCount!=null">
+                follow_num=#{followCount},
+            </if>
+            <if test="followAmount!=null">
+                follow_amount=#{followAmount},
+            </if>
+            <if test="recentRecord!=null">
+                recent_record = #{recentRecord},
+            </if>
+            <if test="hitRate!=null">
+                hit_rate = #{hitRate},
+            </if>
+            <if test="continueHit!=null">
+                continue_hit = #{continueHit},
+            </if>
+        </set>
+        where id=#{orderIssueId}
+    </update>
+
+    <update id="updateUserIssueInfo" parameterType="com.hhly.lottomsg.bo.OrderCopyViewBO">
+        update m_user_issue_info
+            <set>
+               <if test="issueCount!=null" >
+                   issue_num = #{issueCount},
+               </if>
+               <if test="issueAmount!=null">
+                   issue_amount=#{issueAmount},
+               </if>
+               <if test="followCount!=null">
+                   follow_num=#{followCount},
+               </if>
+                <if test="followAmount!=null">
+                    follow_amount=#{followAmount},
+                </if>
+                <if test="commissionAmount!=null">
+                    commission_amount = #{commissionAmount},
+                </if>
+                <if test="recentRecord!=null">
+                    recent_record = #{recentRecord},
+                </if>
+                <if test="hitRate!=null">
+                    hit_rate = #{hitRate},
+                </if>
+                <if test="profitRate!=null">
+                    profit_rate = #{profitRate},
+                </if>
+                <if test="hitNum!=null">
+                    hit_num = #{hitNum},
+                </if>
+                <if test="hitMoney!=null">
+                    hit_money = #{hitMoney},
+                </if>
+                <if test="winAmount!=null">
+                    win_amount = #{winAmount},
+                </if>
+                <if test="continueHit!=null">
+                    continue_hit = #{continueHit},
+                </if>
+
+            </set>
+        where id = #{userIssueId}
+    </update>
+
+    <update id="updateOrderInfo" parameterType="String">
+        update order_info set order_type=2 where order_code = #{orderCode}
+    </update>
+
+
+
+
+
+
+</mapper>

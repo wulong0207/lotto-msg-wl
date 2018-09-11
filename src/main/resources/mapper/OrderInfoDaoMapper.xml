@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hhly.lottomsg.mapper.OrderInfoDaoMapper">
+
+	<resultMap id="addIssueResultMap" type="com.hhly.lottomsg.bo.OrderAddedIssueBO">
+		<id column="ID" jdbcType="DECIMAL" property="id" />
+		<result column="ORDER_ADD_CODE" jdbcType="VARCHAR" property="orderAddCode" />
+		<result column="ORDER_CODE" jdbcType="VARCHAR" property="orderCode" />
+		<result column="ISSUE_CODE" jdbcType="VARCHAR" property="issueCode" />
+		<result column="BUY_AMOUNT" jdbcType="DECIMAL" property="buyAmount" />
+		<result column="MULTIPLE" jdbcType="DECIMAL" property="multiple" />
+		<result column="ADD_STATUS" jdbcType="SMALLINT" property="addStatus" />
+		<result column="PRE_BONUS" jdbcType="DECIMAL" property="preBonus" />
+		<result column="ADD_TIME" jdbcType="TIMESTAMP" property="addTime" />
+		<result column="MODIFY_TIME" jdbcType="TIMESTAMP" property="modifyTime" />
+		<result column="UPDATE_TIME" jdbcType="TIMESTAMP" property="updateTime" />
+		<result column="CREATE_TIME" jdbcType="TIMESTAMP" property="createTime" />
+		<result column="FLAG" jdbcType="DECIMAL" property="flag" />
+	</resultMap>
+
+	<select id="queryOrderInfo"
+		resultType="com.hhly.lottomsg.bo.OrderBaseInfoBO">
+		/*master*/select o.id id,
+		o.order_code orderCode,
+		o.LOTTERY_CODE lotteryCode,
+		lt.LOTTERY_NAME lotteryName,
+		o.LOTTERY_CHILD_CODE lotteryChildCode,
+		o.create_time showDate,
+		o.send_time sendTime,
+		o.PRE_BONUS preBonus,
+		o.AFT_BONUS aftBonus,
+		o.LOTTERY_ISSUE lotteryIssue,
+		o.BUY_TYPE buyType,
+		o.MULTIPLE_NUM multipleNum,
+		o.ORDER_AMOUNT orderAmount,
+		o.order_status orderStatus,
+		o.PAY_STATUS payStatus,
+		o.RED_CODE_USED redCode,
+		o.RED_CODE_GET redCodeGet,
+		o.come_out_time comeOutTime,
+		o.END_TICKET_TIME endTicketTime,
+		o.END_SYS_TIME endSaleTime,
+		o.lottery_time lotteryTime,
+		o.DRAW_CODE drawCode,
+		o.MAX_BUY_SCREEN maxBuyScreen,
+		o.remark remark,
+		o.BUY_NUMBER betNum,
+		o.IS_DLT_ADD isDltAdd,
+		o.USER_ID userId,
+		o.WINNING_STATUS winningStatus,
+		o.order_type orderType,
+		o.update_time updateTime
+		from ORDER_INFO o
+		join lottery_type lt on o.lottery_code = lt.lottery_code
+		where o.order_code =
+		#{orderCode}
+		<if test="userId!=null">
+			and o.USER_ID = #{userId}
+		</if>
+	</select>
+
+
+	<select id="queryOrderAddInfo"
+		resultType="com.hhly.lottomsg.bo.OrderBaseInfoBO">
+		/*master*/select oa.id id,
+		oa.order_add_code orderCode,
+		oa.lottery_code lotteryCode,
+		lt.lottery_name lotteryName,
+		oa.lottery_code lotteryChildCode,
+		oa.create_time showDate,
+		oa.pre_bonus preBonus,
+		oa.AFT_BONUS aftBonus,
+		oa.issue_code lotteryIssue,
+		4 buyType,
+		oa.add_amount orderAmount,
+		oa.add_status addStatus,
+		oa.pay_status payStatus,
+		oa.STOP_TYPE stopType,
+		oa.RED_CODE_USED redCode,
+		0 winningStatus,
+		oa.MULTIPLE_NUM multipleNum,
+		oa.PAY_END_TIME endSaleTime,
+		oa.ADD_COUNT betNum,
+		oa.issue_amount totalIssue,
+		oa.IS_DLT_ADD isDltAdd,
+		oa.USER_ID userId,
+		oa.had_issue hadIssue,
+		oa.stop_condition stopCondition,
+		oa.create_time orderCreateTime,
+		oa.end_time addEndTime
+		from ORDER_ADDED oa
+		join lottery_type lt on oa.lottery_code = lt.lottery_code
+		where
+		oa.order_add_code = #{orderAddCode}
+		<if test="userId!=null">
+			and oa.USER_ID = #{userId}
+		</if>
+	</select>
+
+	<select id="getOrderAddedIssues" resultMap="addIssueResultMap"
+		parameterType="com.hhly.lottomsg.bo.OrderAddedIssueBO">
+		/*master*/select
+		ID, ORDER_ADD_CODE, ORDER_CODE, ISSUE_CODE, BUY_AMOUNT,
+		MULTIPLE, ADD_STATUS,
+		PRE_BONUS,ADD_TIME, MODIFY_TIME, UPDATE_TIME,
+		CREATE_TIME,FLAG
+		FROM ORDER_ADDED_ISSUE
+		<trim prefix="where" prefixOverrides="and|or">
+			<if test="orderAddCode != null  and orderAddCode !='' ">
+				AND ORDER_ADD_CODE = #{orderAddCode}
+			</if>
+			<if test="orderCode != null and orderCode !='' ">
+				AND ORDER_CODE = #{orderCode}
+			</if>
+			<if test="issueCode != null and issueCode !='' ">
+				AND ISSUE_CODE = #{issueCode}
+			</if>
+			<if test="addStatus != null ">
+				AND ADD_STATUS = #{addStatus}
+			</if>
+		</trim>
+	</select>
+	
+	<select id="getOrderTrans" resultType="com.hhly.lottomsg.bo.TransUserBO">
+		/*master*/select
+			tr.id id,
+			tr.order_code orderCode,
+			tr.trans_status transStatus,
+			tr.trans_time transTime
+		FROM
+			trans_user tr
+		where tr.order_code = #{orderCode}
+		<if test="transStatus!=null">
+			and tr.trans_status = #{transStatus}
+		</if>
+		ORDER BY tr.trans_time limit 1
+	</select>
+
+</mapper>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.hhly.lottomsg.mapper.OrderFlowInfoMapper">
+
+    <insert id="insertOrderFlowInfo" parameterType="com.hhly.lottomsg.po.OrderFlowInfoPO">
+        insert into ORDER_FLOW_INFO
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+        <if test="null!=id">
+            ID,
+        </if>
+        <if test="null!=orderCode">
+            ORDER_CODE,
+        </if>
+        <if test="null!=orderAddCode">
+            ORDER_ADD_CODE,
+        </if>
+        <if test="null!=userId">
+            USER_ID,
+        </if>
+        <if test="null!=buyType">
+            BUY_TYPE,
+        </if>
+        <if test="null!=status">
+            STATUS,
+        </if>
+        <if test="null!=position">
+            POSITION,
+        </if>
+        <if test="null!=createTime">
+            CREATE_TIME,
+        </if>
+        <if test="null!=message">
+            MESSAGE,
+        </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+        <if test="null!=id">
+            #{id},
+        </if>
+        <if test="null!=orderCode">
+            #{orderCode},
+        </if>
+        <if test="null!=orderAddCode">
+            #{orderAddCode},
+        </if>
+        <if test="null!=userId">
+            #{userId},
+        </if>
+        <if test="null!=buyType">
+            #{buyType},
+        </if>
+        <if test="null!=status">
+            #{status},
+        </if>
+        <if test="null!=position">
+            #{position},
+        </if>
+        <if test="null!=createTime">
+            #{createTime},
+        </if>
+        <if test="null!=message">
+            #{message},
+        </if>
+        </trim>
+    </insert>
+
+    <!--根据订单编号查询订单流程信息-->
+    <select id="queryOrderFlowInfos" resultType="com.hhly.lottomsg.bo.OrderFlowInfoBO">
+        select
+        oi.buy_type buyType,
+        oi.status status,
+        oi.message message,
+        oi.CREATE_TIME createTime
+        from ORDER_FLOW_INFO oi
+        where oi.order_code = #{orderCode}
+        and oi.status = #{status}
+        <if test="message != null">
+        	and oi.message like concat('%', #{message}, '%')
+        </if>
+    </select>
+
+
+
+</mapper>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hhly.lottomsg.mapper.UserMsgConfigDaoMapper">
+	
+	<sql id="User_Config_Columns">
+		ID,
+		USER_ID USERID,
+		MOB MOB,
+		SITE SITE,
+		APP APP, 
+		WECHAT WECHAT
+	</sql>
+	
+	<!-- 查询用户接收配置信息 -->
+	<select id="findUserConfig" resultType="com.hhly.lottomsg.bo.OperateMsgConfigBO">
+	    select <include refid="User_Config_Columns"/> from OPERATE_MSG_CONFIG 
+			<where>
+				<if test="userId != null and userId != ''">
+					and USER_ID=#{userId}
+				</if>
+				<if test="typeId!=null and typeId!=''">
+					and TEMPLATE_ID=#{typeId}
+				</if>
+			</where>
+	</select>
+	
+	<select id="findLotteryMsgConfig" resultType="com.hhly.lottomsg.bo.OperateMsgConfigLotteryBO">
+						SELECT
+					mc.*, lot.lottery_name lotteryName
+				FROM
+					(
+						SELECT
+							id,
+							lottery_code lotteryCode,
+							type,
+							app,
+							user_id userId
+						FROM
+							operate_msg_config_lottery
+						WHERE
+							user_id = #{userId}
+						AND lottery_code = #{lotCode}
+						AND type=#{msgType}
+					) mc
+				LEFT JOIN lottery_type lot ON mc.lotteryCode = lot.lottery_code
+	</select>
+	
+</mapper>

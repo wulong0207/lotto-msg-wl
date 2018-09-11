@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.hhly.lottomsg.mapper.OrderDaoMapper">
+	
+	<select id="findOrderInfoByCode" resultType="com.hhly.lottomsg.bo.OrderBO">
+
+		SELECT
+				uo.id id,
+				uo.user_id userId,
+				uo.red_code_used redCode,
+				uo.lottery_code lotCode,
+				uo.lottery_name lotName,
+				uo.lottery_child_code play,
+				uo.lottery_issue issue,
+				uo.buy_type buyType,
+				uo.buy_time buyTime,
+				uo.order_type orderType,
+				uo.remark remark,
+				uo.redeem_code redeemCode,
+				CASE uo.buy_type
+				WHEN 1 THEN
+					'代购'
+				WHEN 2 THEN
+					'追号'
+				WHEN 3 THEN
+					'合买'
+				END AS buyTypeName,
+				uo.order_code orderCode,
+				uo.pre_bonus preBonus,
+				uo.winning_detail prizeGrade,
+				uo.account_name accountName,
+				uo.nick_name nickName,
+				CASE r.red_type
+					WHEN 1 THEN
+						'充值红包'
+					WHEN 2 THEN
+						'满减红包'
+					WHEN 3 THEN
+						'彩金红包'
+					WHEN 4 THEN
+						'加奖红包'
+					WHEN 5 THEN
+						'大礼包'
+					WHEN 6 THEN
+						'随机红包' END AS redTypeName,
+			 r.trans_amount redPacketMoney
+			FROM
+				(
+					SELECT
+						o.*, 
+						u.account_name,
+						u.nick_name
+					FROM
+						(
+							SELECT
+								*
+						FROM
+							order_info
+						WHERE
+							order_code = #{orderCode}
+						) o
+					LEFT JOIN m_user_info u ON o.user_id = u.id
+				) uo
+			LEFT JOIN trans_red r ON uo.red_code_get = r.red_code
+
+	</select>
+</mapper>

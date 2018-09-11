@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-module
+  type="WEB"
+  name="lotto"
+  id="myeclipse.1462775197726"
+  context-root="/lotto"
+  j2ee-spec="5.0"
+  archive="lotto.war">
+  <attributes>
+    <attribute name="webrootdir" value="/src/main/webapp" />
+  </attributes>
+</project-module>
+

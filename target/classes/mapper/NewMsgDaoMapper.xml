@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hhly.lottomsg.mapper.NewMsgDaoMapper">
+	
+	<sql id="New_Msg_Columns">
+		ID,
+		STATUS STATUS,
+		MOB_STATUS MOBSTATUS, 
+		SITE_STATUS SITESTATUS,
+		APP_STATUS APPSTATUS,
+		WECHAT_STATUS WECHATSTATUS,
+		MOB_TITLE MOBTITLE,
+		MOB_CONTENT MOBCONTENT,
+		SITE_TITLE SITETITLE,
+		SITE_CONTENT SITECONTENT,
+		APP_TITLE APPTITLE,
+		APP_CONTENT APPCONTENT,
+		REMARK REMARK,
+		CREATE_BY CREATEBY,
+		MODIFY_BY MODIFYBY,
+		UPDATE_TIME UPDATETIME,
+		CREATE_TIME CREATETIME,
+		WECHAT_ID WECHATID,
+		WECHAT_TITLE WECHATTITLE,
+		HEADER_CON HEADERCON,
+		FOOTER_CON FOOTERCON,
+		TEMPLATE_ID TEMPLATEID,
+		MSG_BATCH MSGBATCH,
+		PRE_SEND_TIME PRESENDTIME,
+		SEND_REASON SENDREASON,
+		MSG_TYPE MSGTYPE,
+		APP_FIELDS APPFIELDS,
+		WECHAT_FIELDS WECHATFIELDS,
+		to_lottery_code toLotteryCode,
+		activity_url activityUrl
+	</sql>
+
+		<!-- 根据批次号查询详情 -->
+	<select id="findNewMsgByBatch" parameterType="string" resultType="com.hhly.lottomsg.bo.OperateMsgNewBO">
+	    select <include refid="New_Msg_Columns"/> from OPERATE_MSG_NEW where MSG_BATCH=#{msgBatch} and STATUS in (0,1)
+	</select>
+	
+		<!-- 更新发布信息状态 -->
+	<update id="updateNewMsgStatus">
+		update OPERATE_MSG_NEW set STATUS=#{status} where ID=#{id}
+	</update>
+	
+	<select id="findNewMsgList" parameterType="com.hhly.lottomsg.vo.OperateMsgNewVO"
+		resultType="com.hhly.lottomsg.bo.OperateMsgNewBO">
+		select
+		<include refid="New_Msg_Columns"/>
+		from OPERATE_MSG_NEW where 1=1  and PRE_SEND_TIME >= NOW() 
+		<include refid="sql_condition_OperateNewMsgVO" />
+		
+		order by PRE_SEND_TIME desc
+		
+	</select>
+	
+	
+		<sql id="sql_condition_OperateNewMsgVO">
+			
+			<if test="templateId!=null">
+				and TEMPLATE_ID = #{templateId}
+			</if>
+			
+			<if test="msgType!=null and msgType!=''">
+				and MSG_TYPE = #{msgType}
+			</if>
+
+	        <if test="status !=null">
+				and STATUS = #{status}
+			</if>
+			<if test="msgBatch!=null and msgBatch!=''">
+				and MSG_BATCH = #{msgBatch}
+			</if>
+	</sql>
+	
+</mapper>

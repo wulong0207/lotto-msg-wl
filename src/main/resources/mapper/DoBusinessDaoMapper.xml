@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.hhly.lottomsg.mapper.DoBusinessDaoMapper">
+	
+	<select id="findRedPackByCode" resultType="com.hhly.lottomsg.bo.DoBusinessBO">
+		SELECT
+				red_name redName,
+				CASE red_type
+					WHEN 1 THEN
+						'充值红包'
+					WHEN 2 THEN
+						'满减红包'
+					WHEN 3 THEN
+						'彩金红包'
+					WHEN 4 THEN
+						'加奖红包'
+					WHEN 5 THEN
+						'大礼包'
+					WHEN 6 THEN
+						'随机红包' END AS redTypeName,
+					red_value redMoney,
+					red_overdue_time redOutTime
+					FROM
+						operate_coupon
+				WHERE
+					user_id=#{userId} AND red_code=#{redCode}
+	</select>
+	
+	<select id="findCurRedPack" resultType="com.hhly.lottomsg.bo.DoBusinessBO">
+		SELECT
+				red_name redName,
+				CASE red_type
+					WHEN 1 THEN
+						'充值红包'
+					WHEN 2 THEN
+						'满减红包'
+					WHEN 3 THEN
+						'彩金红包'
+					WHEN 4 THEN
+						'加奖红包'
+					WHEN 5 THEN
+						'大礼包'
+					WHEN 6 THEN
+						'随机红包' END AS redTypeName,
+					red_value redMoney,
+					red_overdue_time redOutTime
+					FROM
+						operate_coupon
+				WHERE
+					user_id=#{userId} order by create_time desc LIMIT 1
+	</select>
+</mapper>
